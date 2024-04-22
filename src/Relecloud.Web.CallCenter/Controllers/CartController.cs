@@ -15,10 +15,10 @@ namespace Relecloud.Web.CallCenter.Controllers
     {
         #region Fields
 
-        private readonly ITicketPurchaseService ticketPurchaseService;
-        private readonly IConcertContextService concertService;
-        private readonly TelemetryClient telemetryClient;
-        private readonly ILogger<CartController> logger;
+        private readonly ITicketPurchaseService _ticketPurchaseService;
+        private readonly IConcertContextService _concertService;
+        private readonly TelemetryClient _telemetryClient;
+        private readonly ILogger<CartController> _logger;
 
         #endregion
 
@@ -26,10 +26,10 @@ namespace Relecloud.Web.CallCenter.Controllers
 
         public CartController(IConcertContextService concertService, TelemetryClient telemetry, ILogger<CartController> logger, ITicketPurchaseService ticketPurchaseService)
         {
-            this.concertService = concertService;
-            this.telemetryClient = telemetry;
-            this.logger = logger;
-            this.ticketPurchaseService = ticketPurchaseService;
+            _concertService = concertService;
+            _telemetryClient = telemetry;
+            _logger = logger;
+            _ticketPurchaseService = ticketPurchaseService;
         }
 
         #endregion
@@ -45,7 +45,7 @@ namespace Relecloud.Web.CallCenter.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unable to show cart items");
+                _logger.LogError(ex, "Unable to show cart items");
                 return View();
             }
         }
@@ -56,7 +56,7 @@ namespace Relecloud.Web.CallCenter.Controllers
 
         public async Task<IActionResult> Add(int concertId)
         {
-            var model = await this.concertService.GetConcertByIdAsync(concertId);
+            var model = await _concertService.GetConcertByIdAsync(concertId);
             if (model == null)
             {
                 return NotFound();
@@ -78,14 +78,14 @@ namespace Relecloud.Web.CallCenter.Controllers
                     }
                     cartData[concertId] = cartData[concertId] + count;
                     SetCartData(cartData);
-                    this.telemetryClient.TrackEvent("AddToCart", new Dictionary<string, string> {
+                    _telemetryClient.TrackEvent("AddToCart", new Dictionary<string, string> {
                         { "ConcertId", concertId.ToString() },
                         { "Count", count.ToString() }
                     });
                 }
                 catch (Exception ex)
                 {
-                    this.logger.LogError(ex, $"Unable to add {concertId} to cart");
+                    _logger.LogError(ex, $"Unable to add {concertId} to cart");
                 }
             }
             return RedirectToAction(nameof(Index));
@@ -108,11 +108,11 @@ namespace Relecloud.Web.CallCenter.Controllers
                         cartData.Remove(concertId);
                     }
                     SetCartData(cartData);
-                    this.telemetryClient.TrackEvent("RemoveFromCart", new Dictionary<string, string> { { "ConcertId", concertId.ToString() } });
+                    _telemetryClient.TrackEvent("RemoveFromCart", new Dictionary<string, string> { { "ConcertId", concertId.ToString() } });
                 }
                 catch (Exception ex)
                 {
-                    this.logger.LogError(ex, $"Unable to remove {concertId} to cart");
+                    _logger.LogError(ex, $"Unable to remove {concertId} to cart");
                 }
             }
 
@@ -151,7 +151,7 @@ namespace Relecloud.Web.CallCenter.Controllers
                     var cartData = await GetCartAsync();
                     var serializableDictionary = MapToSerializableDictionary(cartData.Concerts);
 
-                    var purchaseResult = await this.ticketPurchaseService.PurchaseTicketAsync(new PurchaseTicketsRequest
+                    var purchaseResult = await _ticketPurchaseService.PurchaseTicketAsync(new PurchaseTicketsRequest
                     {
                         ConcertIdsAndTicketCounts = serializableDictionary,
                         PaymentDetails = model.PaymentDetails,
@@ -162,7 +162,7 @@ namespace Relecloud.Web.CallCenter.Controllers
                     {
                         // Remove all items from the cart.
                         SetCartData(new Dictionary<int, int>());
-                        this.telemetryClient.TrackEvent("CheckoutCart");
+                        _telemetryClient.TrackEvent("CheckoutCart");
                         return RedirectToAction(nameof(Index), "Ticket");
                     }
 
@@ -178,7 +178,7 @@ namespace Relecloud.Web.CallCenter.Controllers
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, $"Unable to perform checkout for ${User.Identity!.Name}");
+                _logger.LogError(ex, $"Unable to perform checkout for ${User.Identity!.Name}");
                 ModelState.AddModelError(string.Empty, "We're sorry for the iconvenience but there was an error while trying to process your order. Please try again later.");
             }
 
@@ -204,7 +204,7 @@ namespace Relecloud.Web.CallCenter.Controllers
         // The key is the concert ID, the value is the number of items in the cart.
         private IDictionary<int, int> GetCartData()
         {
-            return this.HttpContext.Session.Get<IDictionary<int, int>>(nameof(CartViewModel)) ?? new Dictionary<int, int>();
+            return HttpContext.Session.Get<IDictionary<int, int>>(nameof(CartViewModel)) ?? new Dictionary<int, int>();
         }
 
         private void SetCartData(IDictionary<int, int> data)
@@ -214,7 +214,7 @@ namespace Relecloud.Web.CallCenter.Controllers
             {
                 data.Remove(emptyItemKey);
             }
-            this.HttpContext.Session.Set(nameof(CartViewModel), data);
+            HttpContext.Session.Set(nameof(CartViewModel), data);
         }
 
         private async Task<CartViewModel> GetCartAsync()
@@ -223,7 +223,7 @@ namespace Relecloud.Web.CallCenter.Controllers
             ICollection<Concert> concertsInCart = new List<Concert>();
             if (cartData.Count > 0)
             {
-                concertsInCart = await this.concertService.GetConcertsByIdAsync(cartData.Keys);
+                concertsInCart = await _concertService.GetConcertsByIdAsync(cartData.Keys);
             }
 
             var concertCartData = concertsInCart.ToDictionary(concert => concert, concert => cartData[concert.Id]);
