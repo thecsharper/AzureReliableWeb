@@ -9,8 +9,8 @@ namespace Relecloud.Web.CallCenter.Controllers;
 [ApiController]
 public class ImageController : ControllerBase
 {
-    private ITicketImageService _ticketImageService;
-    private ILogger<ImageController> _logger;
+    private readonly ITicketImageService _ticketImageService;
+    private readonly ILogger<ImageController> _logger;
 
     public ImageController(ITicketImageService ticketImageService, ILogger<ImageController> logger)
     {

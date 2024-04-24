@@ -12,8 +12,8 @@ namespace Relecloud.Web.CallCenter.Controllers
     {
         #region Fields
 
-        private readonly ILogger<TicketController> logger;
-        private readonly IConcertContextService concertService;
+        private readonly ILogger<TicketController> _logger;
+        private readonly IConcertContextService _concertService;
 
         #endregion
 
@@ -21,8 +21,8 @@ namespace Relecloud.Web.CallCenter.Controllers
 
         public TicketController(IConcertContextService concertService, ILogger<TicketController> logger)
         {
-            this.concertService = concertService;
-            this.logger = logger;
+            _concertService = concertService;
+            _logger = logger;
         }
 
         #endregion
@@ -33,8 +33,8 @@ namespace Relecloud.Web.CallCenter.Controllers
         {
             try
             {
-                var userId = this.User.GetUniqueId();
-                var pagedResultModel = await this.concertService.GetAllTicketsAsync(userId, currentPage * TicketViewModel.DefaultPageSize, TicketViewModel.DefaultPageSize);
+                var userId = User.GetUniqueId();
+                var pagedResultModel = await _concertService.GetAllTicketsAsync(userId, currentPage * TicketViewModel.DefaultPageSize, TicketViewModel.DefaultPageSize);
 
                 return View(new TicketViewModel
                 {
@@ -45,7 +45,7 @@ namespace Relecloud.Web.CallCenter.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unable to retrieve upcoming concerts");
+                _logger.LogError(ex, "Unable to retrieve upcoming concerts");
                 return View();
             }
         }
