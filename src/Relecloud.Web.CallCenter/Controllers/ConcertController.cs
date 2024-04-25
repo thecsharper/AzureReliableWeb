@@ -12,9 +12,9 @@ namespace Relecloud.Web.CallCenter.Controllers
     {
         #region Fields
 
-        private readonly IConcertContextService concertService;
-        private readonly IConcertSearchService concertSearchService;
-        private readonly ILogger<ConcertController> logger;
+        private readonly IConcertContextService _concertService;
+        private readonly IConcertSearchService _concertSearchService;
+        private readonly ILogger<ConcertController> _logger;
 
         #endregion
 
@@ -22,9 +22,9 @@ namespace Relecloud.Web.CallCenter.Controllers
 
         public ConcertController(IConcertContextService concertService, IConcertSearchService concertSearchService, ILogger<ConcertController> logger)
         {
-            this.concertService = concertService;
-            this.concertSearchService = concertSearchService;
-            this.logger = logger;
+           _concertService = concertService;
+           _concertSearchService = concertSearchService;
+           _logger = logger;
         }
 
         #endregion
@@ -35,12 +35,12 @@ namespace Relecloud.Web.CallCenter.Controllers
         {
             try
             {
-                var model = await this.concertService.GetUpcomingConcertsAsync(10);
+                var model = await _concertService.GetUpcomingConcertsAsync(10);
                 return View(model);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unable to retrieve upcoming concerts");
+                _logger.LogError(ex, "Unable to retrieve upcoming concerts");
                 return View();
             }
         }
@@ -70,7 +70,7 @@ namespace Relecloud.Web.CallCenter.Controllers
                     model.UpdatedBy = model.CreatedBy;
                     model.CreatedOn = DateTime.UtcNow;
                     model.UpdatedOn = model.CreatedOn;
-                    var newConcertResult = await this.concertService.CreateConcertAsync(model);
+                    var newConcertResult = await _concertService.CreateConcertAsync(model);
                     if (newConcertResult.Success)
                     {
                         return RedirectToAction("Details", new { id = newConcertResult.NewId });
@@ -80,7 +80,7 @@ namespace Relecloud.Web.CallCenter.Controllers
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Unhadled exception from ConcertController.Create(model)");
+                    _logger.LogError(ex, "Unhadled exception from ConcertController.Create(model)");
                     ModelState.AddModelError(string.Empty, "Unable to save concerts. Please try again later.");
                 }
             }
@@ -101,7 +101,7 @@ namespace Relecloud.Web.CallCenter.Controllers
         {
             try
             {
-                var model = await this.concertService.GetConcertByIdAsync(id);
+                var model = await _concertService.GetConcertByIdAsync(id);
 
                 return View(new ConcertViewModel
                 {
@@ -110,7 +110,7 @@ namespace Relecloud.Web.CallCenter.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Unable to retrieve concertId: {id}");
+                _logger.LogError(ex, $"Unable to retrieve concertId: {id}");
                 return View();
             }
         }
@@ -125,17 +125,17 @@ namespace Relecloud.Web.CallCenter.Controllers
                 {
                     model.UpdatedBy = User.Identity?.Name ?? "Unknown";
                     model.UpdatedOn = DateTime.UtcNow;
-                    var updateConcertResult = await this.concertService.UpdateConcertAsync(model);
+                    var updateConcertResult = await _concertService.UpdateConcertAsync(model);
                     if (updateConcertResult.Success)
                     {
                         return RedirectToAction("Details", new { id = model.Id });
                     }
 
-                    ModelState.AddErrorMessages(updateConcertResult.ErrorMessages);
+                    ModelState.AddErrorMessages(updateConcertResult.ErrorMessages!);
                 }
                 catch (Exception ex)
                 {
-                    logger.LogError(ex, "Unhadled exception from ConcertController.Edit(model)");
+                    _logger.LogError(ex, "Unhadled exception from ConcertController.Edit(model)");
                     ModelState.AddModelError(string.Empty, "Unable to save concerts. Please try again later.");
                 }
             }
@@ -155,12 +155,12 @@ namespace Relecloud.Web.CallCenter.Controllers
         {
             try
             {
-                var model = await this.concertService.GetConcertByIdAsync(id);
+                var model = await _concertService.GetConcertByIdAsync(id);
                 return View(model);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Unable to retrieve concertId: {id}");
+                _logger.LogError(ex, $"Unable to retrieve concertId: {id}");
                 return View();
             }
         }
@@ -172,20 +172,20 @@ namespace Relecloud.Web.CallCenter.Controllers
         {
             try
             {
-                var deleteConcertResult = await this.concertService.DeleteConcertAsync(id);
+                var deleteConcertResult = await _concertService.DeleteConcertAsync(id);
 
                 if (deleteConcertResult.Success)
                 {
                     return RedirectToAction("Index");
                 }
 
-                var model = await this.concertService.GetConcertByIdAsync(id);
+                var model = await _concertService.GetConcertByIdAsync(id);
                 ModelState.AddErrorMessages(deleteConcertResult.ErrorMessages);
                 return View(nameof(Delete), model);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unhadled exception from ConcertController.DeleteConfirmed");
+                _logger.LogError(ex, "Unhadled exception from ConcertController.DeleteConfirmed");
                 return RedirectToAction("Index");
             }
         }
@@ -198,7 +198,7 @@ namespace Relecloud.Web.CallCenter.Controllers
         {
             try
             {
-                var model = await this.concertService.GetConcertByIdAsync(id);
+                var model = await _concertService.GetConcertByIdAsync(id);
                 if (model == null)
                 {
                     return NotFound();
@@ -213,7 +213,7 @@ namespace Relecloud.Web.CallCenter.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Unable to retrieve concertId: {id}");
+                _logger.LogError(ex, $"Unable to retrieve concertId: {id}");
                 return View();
             }
         }
@@ -232,12 +232,12 @@ namespace Relecloud.Web.CallCenter.Controllers
                     return View();
                 }
 
-                var result = await this.concertSearchService.SearchAsync(request);
+                var result = await _concertSearchService.SearchAsync(request);
                 return View(result);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, $"Unable to display search results for query '{request.Query}'");
+                _logger.LogError(ex, $"Unable to display search results for query '{request.Query}'");
                 return View(default(SearchResponse<Concert>));
             }
         }
@@ -250,12 +250,12 @@ namespace Relecloud.Web.CallCenter.Controllers
         {
             try
             {
-                var suggestions = await this.concertSearchService.SuggestAsync(query);
+                var suggestions = await _concertSearchService.SuggestAsync(query);
                 return Json(suggestions);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, $"Unable to suggest search results for query '{query}'");
+                this._logger.LogError(ex, $"Unable to suggest search results for query '{query}'");
                 return Json(new string[0]);
             }
         }
