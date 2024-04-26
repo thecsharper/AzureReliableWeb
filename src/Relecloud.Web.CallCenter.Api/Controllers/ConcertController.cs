@@ -17,15 +17,15 @@ namespace Relecloud.Web.Api.Controllers
     {
         public const int DefaultNumberOfConcerts = 10;
 
-        private readonly ILogger<ConcertController> logger;
-        private readonly ITicketManagementService ticketService;
-        private readonly IConcertRepository concertRepository;
+        private readonly ILogger<ConcertController> _logger;
+        private readonly ITicketManagementService _ticketService;
+        private readonly IConcertRepository _concertRepository;
 
         public ConcertController(ILogger<ConcertController> logger, ITicketManagementService ticketService, IConcertRepository concertRepository)
         {
-            this.logger = logger;
-            this.ticketService = ticketService;
-            this.concertRepository = concertRepository;
+            _logger = logger;
+            _ticketService = ticketService;
+            _concertRepository = concertRepository;
         }
 
         [HttpGet("{id}", Name = "GetConcertById")]
@@ -35,7 +35,7 @@ namespace Relecloud.Web.Api.Controllers
         {
             try
             {
-                var concert = await this.concertRepository.GetConcertByIdAsync(id);
+                var concert = await _concertRepository.GetConcertByIdAsync(id);
                 if (concert == null)
                 {
                     return NotFound();
@@ -46,7 +46,7 @@ namespace Relecloud.Web.Api.Controllers
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Unhandled exception from ConcertController.CreateAsync");
+                _logger.LogError(ex, "Unhandled exception from ConcertController.CreateAsync");
                 return Problem("Unable to Get the concert");
             }
         }
@@ -77,13 +77,13 @@ namespace Relecloud.Web.Api.Controllers
                     });
                 }
 
-                var newConcertResult = await this.concertRepository.CreateConcertAsync(model);
+                var newConcertResult = await _concertRepository.CreateConcertAsync(model);
 
                 return CreatedAtRoute("GetConcertById", new { id = newConcertResult.NewId }, model);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Unhandled exception from ConcertController.CreateAsync");
+                _logger.LogError(ex, "Unhandled exception from ConcertController.CreateAsync");
                 return Problem("Unable to Create the concert");
             }
         }
@@ -98,7 +98,7 @@ namespace Relecloud.Web.Api.Controllers
         {
             try
             {
-                var existingConcert = await this.concertRepository.GetConcertByIdAsync(model.Id);
+                var existingConcert = await _concertRepository.GetConcertByIdAsync(model.Id);
                 if (existingConcert == null)
                 {
                     return NotFound();
@@ -129,13 +129,13 @@ namespace Relecloud.Web.Api.Controllers
                     });
                 }
 
-                await this.concertRepository.UpdateConcertAsync(model);
+                await _concertRepository.UpdateConcertAsync(model);
 
                 return Accepted(model);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Unhandled exception from ConcertController.UpdateAsync");
+                _logger.LogError(ex, "Unhandled exception from ConcertController.UpdateAsync");
                 return Problem("Unable to Update the concert");
             }
         }
@@ -150,7 +150,7 @@ namespace Relecloud.Web.Api.Controllers
         {
             try
             {
-                var concert = await this.concertRepository.GetConcertByIdAsync(id);
+                var concert = await _concertRepository.GetConcertByIdAsync(id);
 
                 if (concert == null)
                 {
@@ -173,12 +173,12 @@ namespace Relecloud.Web.Api.Controllers
                     });
                 }
 
-                await this.concertRepository.DeleteConcertAsync(id);
+                await _concertRepository.DeleteConcertAsync(id);
                 return Ok();
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, "Unhandled exception from ConcertController.DeleteAsync");
+                _logger.LogError(ex, "Unhandled exception from ConcertController.DeleteAsync");
                 return Problem("Unable to Delete the concert");
             }
         }
@@ -187,7 +187,7 @@ namespace Relecloud.Web.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ICollection<Concert>))]
         public async IAsyncEnumerable<Concert> GetUpcomingConcertsAsync(int numberOfConcerts = DefaultNumberOfConcerts)
         {
-            var concerts = await this.concertRepository.GetUpcomingConcertsAsync(numberOfConcerts);
+            var concerts = await _concertRepository.GetUpcomingConcertsAsync(numberOfConcerts);
 
             foreach (var concert in concerts)
             {
@@ -209,7 +209,7 @@ namespace Relecloud.Web.Api.Controllers
                 ids = new List<int>();
             }
 
-            var concerts = await this.concertRepository.GetConcertsByIdAsync(ids!);
+            var concerts = await _concertRepository.GetConcertsByIdAsync(ids!);
 
             foreach (var concert in concerts)
             {
@@ -219,7 +219,7 @@ namespace Relecloud.Web.Api.Controllers
 
         private async Task<bool> HaveTicketsBeenSoldAsync(int concertId)
         {
-            var result = await this.ticketService.HaveTicketsBeenSoldAsync(concertId);
+            var result = await _ticketService.HaveTicketsBeenSoldAsync(concertId);
             TicketManagementResultGuardClause(result);
             return result.HaveTicketsBeenSold;
         }
@@ -231,7 +231,7 @@ namespace Relecloud.Web.Api.Controllers
 
         private async Task<int> CountAvailableTicketsAsync(int concertId)
         {
-            var result = await this.ticketService.CountAvailableTicketsAsync(concertId);
+            var result = await _ticketService.CountAvailableTicketsAsync(concertId);
             TicketManagementResultGuardClause(result);
             return result.CountOfAvailableTickets;
         }
