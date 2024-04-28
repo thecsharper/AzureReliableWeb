@@ -9,13 +9,13 @@ namespace Relecloud.Web.Api.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly ILogger<UserController> logger;
-        private readonly IConcertRepository concertRepository;
+        private readonly ILogger<UserController> _logger;
+        private readonly IConcertRepository _concertRepository;
 
         public UserController(ILogger<UserController> logger, IConcertRepository concertRepository)
         {
-            this.logger = logger;
-            this.concertRepository = concertRepository;
+            _logger = logger;
+            _concertRepository = concertRepository;
         }
 
         [HttpGet("{id}", Name = "GetUserById")]
@@ -27,7 +27,7 @@ namespace Relecloud.Web.Api.Controllers
         {
             try
             {
-                var user = await this.concertRepository.GetUserByIdAsync(id);
+                var user = await _concertRepository.GetUserByIdAsync(id);
 
                 if (user == null)
                 {
@@ -38,7 +38,7 @@ namespace Relecloud.Web.Api.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unhandled exception from UserController.GetAsync");
+                _logger.LogError(ex, "Unhandled exception from UserController.GetAsync");
                 return Problem("Unable to GetAsync this user");
             }
         }
@@ -57,13 +57,13 @@ namespace Relecloud.Web.Api.Controllers
                     return BadRequest();
                 }
 
-                await this.concertRepository.CreateOrUpdateUserAsync(model);
+                await _concertRepository.CreateOrUpdateUserAsync(model);
 
                 return Accepted();
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unhandled exception from UserController.CreateOrUpdateUserAsync");
+                _logger.LogError(ex, "Unhandled exception from UserController.CreateOrUpdateUserAsync");
                 return Problem("Unable to CreateOrUpdateUserAsync the user");
             }
         }
