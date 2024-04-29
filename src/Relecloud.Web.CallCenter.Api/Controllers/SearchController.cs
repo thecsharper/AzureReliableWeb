@@ -10,13 +10,13 @@ namespace Relecloud.Web.Api.Controllers
     [ApiController]
     public class SearchController : ControllerBase
     {
-        private ILogger<SearchController> logger;
-        private readonly IConcertSearchService concertSearchService;
+        private ILogger<SearchController> _logger;
+        private readonly IConcertSearchService _concertSearchService;
 
         public SearchController(ILogger<SearchController> logger, IConcertSearchService concertSearchService)
         {
-            this.logger = logger;
-            this.concertSearchService = concertSearchService;
+            _logger = logger;
+            _concertSearchService = concertSearchService;
         }
 
         [HttpPost("Concerts", Name = "SearchConcerts")]
@@ -27,12 +27,12 @@ namespace Relecloud.Web.Api.Controllers
         {
             try
             {
-                var response = await this.concertSearchService.SearchAsync(searchRequest);
+                var response = await _concertSearchService.SearchAsync(searchRequest);
                 return Ok(response);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, $"Unable to display search results for query '{searchRequest.Query}'");
+                _logger.LogError(ex, $"Unable to display search results for query '{searchRequest.Query}'");
                 return Problem($"Unable to display search results for query '{searchRequest.Query}'");
             }
         }
@@ -43,12 +43,12 @@ namespace Relecloud.Web.Api.Controllers
         {
             try
             {
-                var suggestions = await this.concertSearchService.SuggestAsync(query);
+                var suggestions = await _concertSearchService.SuggestAsync(query);
                 return Ok(suggestions);
             }
             catch (Exception ex)
             {
-                this.logger.LogError(ex, $"Unable to suggest search results for query '{query}'");
+                _logger.LogError(ex, $"Unable to suggest search results for query '{query}'");
                 return Problem($"Unable to suggest search results for query '{query}'");
             }
         }
