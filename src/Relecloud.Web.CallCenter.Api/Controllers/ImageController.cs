@@ -10,13 +10,13 @@ namespace Relecloud.Web.Controllers
     [ApiController]
     public class ImageController : ControllerBase
     {
-        private ITicketImageService ticketImageService;
-        private ILogger<ImageController> logger;
+        private ITicketImageService _ticketImageService;
+        private ILogger<ImageController> _logger;
 
         public ImageController(ITicketImageService ticketImageService, ILogger<ImageController> logger)
         {
-            this.ticketImageService = ticketImageService;
-            this.logger = logger;
+            _ticketImageService = ticketImageService;
+            _logger = logger;
         }
 
         [HttpGet("{imageName}")]
@@ -32,12 +32,12 @@ namespace Relecloud.Web.Controllers
                     return BadRequest();
                 }
 
-                var imageStream = await this.ticketImageService.GetTicketImagesAsync(imageName);
+                var imageStream = await _ticketImageService.GetTicketImagesAsync(imageName);
                 return File(imageStream, "application/octet-stream");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, $"Unable to retrive image {imageName}");
+                _logger.LogError(ex, $"Unable to retrive image {imageName}");
                 return Problem("Unable to get the image");
             }
         }
