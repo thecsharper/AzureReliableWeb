@@ -16,18 +16,17 @@ namespace Relecloud.Web.Api.Controllers
     {
         public const int DefaultNumberOfTickets = 5;
 
-        private readonly ILogger<TicketController> logger;
-
-        private readonly IConcertRepository concertRepository;
-        private readonly IPaymentGatewayService paymentGatewayService;
-        private readonly ITicketManagementService ticketService;
+        private readonly ILogger<TicketController> _logger;
+        private readonly IConcertRepository _concertRepository;
+        private readonly IPaymentGatewayService _paymentGatewayService;
+        private readonly ITicketManagementService _ticketService;
 
         public TicketController(ILogger<TicketController> logger, IConcertRepository concertRepository, ITicketManagementService ticketService, IPaymentGatewayService paymentGatewayService)
         {
-            this.logger = logger;
-            this.concertRepository = concertRepository;
-            this.ticketService = ticketService;
-            this.paymentGatewayService = paymentGatewayService;
+            _logger = logger;
+            _concertRepository = concertRepository;
+            _ticketService = ticketService;
+            _paymentGatewayService = paymentGatewayService;
         }
 
         [HttpGet("{id}", Name = "GetTicketById")]
@@ -38,7 +37,7 @@ namespace Relecloud.Web.Api.Controllers
         {
             try
             {
-                var ticket = await this.concertRepository.GetTicketByIdAsync(id);
+                var ticket = await _concertRepository.GetTicketByIdAsync(id);
 
                 if (ticket == null)
                 {
@@ -49,7 +48,7 @@ namespace Relecloud.Web.Api.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unhandled exception from TicketController.GetAsync");
+                _logger.LogError(ex, "Unhandled exception from TicketController.GetAsync");
                 return Problem("Unable to GetAsync this ticket");
             }
         }
@@ -62,13 +61,13 @@ namespace Relecloud.Web.Api.Controllers
         {
             try
             {
-                var tickets = await this.concertRepository.GetAllTicketsAsync(userId, skip, take);
+                var tickets = await _concertRepository.GetAllTicketsAsync(userId, skip, take);
 
                 return Ok(tickets);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unhandled exception from TicketController.GetAllTicketsAsync");
+                _logger.LogError(ex, "Unhandled exception from TicketController.GetAllTicketsAsync");
                 return Problem("Unable to GetAllTickets for this user");
             }
         }
@@ -115,7 +114,7 @@ namespace Relecloud.Web.Api.Controllers
                     return BadRequest(PurchaseTicketsResult.ErrorResponse(errors));
                 }
 
-                await this.concertRepository.CreateOrUpdateUserAsync(new User{
+                await _concertRepository.CreateOrUpdateUserAsync(new User{
                     Id = purchaseTicketRequest!.UserId ?? Guid.Empty.ToString(),
                     DisplayName = purchaseTicketRequest!.PaymentDetails!.Name
                 });
@@ -127,18 +126,18 @@ namespace Relecloud.Web.Api.Controllers
                     PaymentDetails = purchaseTicketRequest.PaymentDetails!,
                     Tickets = purchaseTicketRequest.ConcertIdsAndTicketCounts
                 };
-                var preAuthResponse = await paymentGatewayService.PreAuthPaymentAsync(preAuthRequest);
+                var preAuthResponse = await _paymentGatewayService.PreAuthPaymentAsync(preAuthRequest);
 
                 if (preAuthResponse.Status != PreAuthPaymentResultStatus.FundsOnHold)
                 {
                     return BadRequest(PurchaseTicketsResult.ErrorResponse("We were unable to process this card. Please review your payment details."));
                 }
 
-                var customer = await this.concertRepository.GetCustomerByEmailAsync(purchaseTicketRequest.PaymentDetails!.Email);
+                var customer = await _concertRepository.GetCustomerByEmailAsync(purchaseTicketRequest.PaymentDetails!.Email);
                 var customerId = customer?.Id ?? 0;
                 if (customerId == 0)
                 {
-                    var createResult = await this.concertRepository.CreateCustomerAsync(new Customer
+                    var createResult = await _concertRepository.CreateCustomerAsync(new Customer
                     {
                         Name = purchaseTicketRequest.PaymentDetails.Name,
                         Email = purchaseTicketRequest.PaymentDetails.Email,
@@ -152,7 +151,7 @@ namespace Relecloud.Web.Api.Controllers
 
                 foreach (var concertAndTickets in purchaseTicketRequest.ConcertIdsAndTicketCounts!)
                 {
-                    var reserveResult = await this.ticketService.ReserveTicketsAsync(concertAndTickets.Key, purchaseTicketRequest.UserId!, concertAndTickets.Value, customerId);
+                    var reserveResult = await _ticketService.ReserveTicketsAsync(concertAndTickets.Key, purchaseTicketRequest.UserId!, concertAndTickets.Value, customerId);
 
                     if (reserveResult.Status != ReserveTicketsResultStatus.Success)
                     {
@@ -168,7 +167,7 @@ namespace Relecloud.Web.Api.Controllers
                     TotalPrice = orderTotal
                 };
 
-                await paymentGatewayService.CapturePaymentAsync(captureRequest);
+                await _paymentGatewayService.CapturePaymentAsync(captureRequest);
 
                 return Accepted(new PurchaseTicketsResult
                 {
@@ -177,7 +176,7 @@ namespace Relecloud.Web.Api.Controllers
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unhandled exception from TicketController.PurchaseTicketsAsync");
+                _logger.LogError(ex, "Unhandled exception from TicketController.PurchaseTicketsAsync");
                 return Problem("Unable to Create the ticket");
             }
         }
@@ -192,7 +191,7 @@ namespace Relecloud.Web.Api.Controllers
             double totalAmount = 0.0;
             foreach (var concertId in request.ConcertIdsAndTicketCounts.Keys)
             {
-                var concert = await this.concertRepository.GetConcertByIdAsync(concertId);
+                var concert = await _concertRepository.GetConcertByIdAsync(concertId);
                 if (concert is null)
                 {
                     throw new InvalidOperationException("Concert Not Found");
