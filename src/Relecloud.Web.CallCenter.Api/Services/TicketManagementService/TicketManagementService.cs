@@ -7,15 +7,15 @@ namespace Relecloud.Web.Api.Services.TicketManagementService
 {
     public class TicketManagementService : ITicketManagementService
     {
-        private readonly ConcertDataContext database;
-        private readonly ITicketRenderingService ticketRenderingService;
-        private readonly ILogger<TicketManagementService> logger;
+        private readonly ConcertDataContext _database;
+        private readonly ITicketRenderingService _ticketRenderingService;
+        private readonly ILogger<TicketManagementService> _logger;
 
         public TicketManagementService(ConcertDataContext database, ITicketRenderingService ticketRenderingService, ILogger<TicketManagementService> logger)
         {
-            this.database = database;
-            this.ticketRenderingService = ticketRenderingService;
-            this.logger = logger;
+            _database = database;
+            _ticketRenderingService = ticketRenderingService;
+            _logger = logger;
         }
 
         public Task<CountAvailableTicketsResult> CountAvailableTicketsAsync(int concertId)
@@ -34,9 +34,11 @@ namespace Relecloud.Web.Api.Services.TicketManagementService
             // as part of that plan we need to check to see if tickets have been sold
             // a business rule will be added:
             // if tickets have been sold then we cannot change the visibility of a concert from visible to hidden
-            var soldTicketCount = await database.Tickets.AsNoTracking()
+            var soldTicketCount = await _database.Tickets.AsNoTracking()
                 .Where(ticket => ticket.ConcertId == concertId)
                 .CountAsync();
+
+            _logger.LogInformation($"Sold ticket count {soldTicketCount}");
 
             return new HaveTicketsBeenSoldResult
             {
@@ -56,15 +58,15 @@ namespace Relecloud.Web.Api.Services.TicketManagementService
                     CustomerId = customerId
                     //TicketNumber = not used. planned for use when tickets become limited due to seating
                 };
-                database.Tickets.Add(newTicket);
+                _database.Tickets.Add(newTicket);
                 newTickets.Add(newTicket);
             }
 
-            await database.SaveChangesAsync();
+            await _database.SaveChangesAsync();
 
             foreach (var ticket in newTickets)
             {
-                await ticketRenderingService.CreateTicketImageAsync(ticket.Id);
+                await _ticketRenderingService.CreateTicketImageAsync(ticket.Id);
             }
 
             return new ReserveTicketsResult
